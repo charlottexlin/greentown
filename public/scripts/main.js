@@ -2,8 +2,8 @@
 // import * as PIXI from 'pixi.js'
 
 // ----- Set up the pixi app and canvas -----
-const gameWidth = 700;
-let app = new PIXI.Application({width: gameWidth, height: 500});
+const gameWidth = 700, gameHeight = 500;
+let app = new PIXI.Application({width: gameWidth, height: gameHeight});
 document.querySelector("#canvas").appendChild(app.view);
 app.renderer.background.color = 0x123456;
 
@@ -21,8 +21,8 @@ class Player {
         let x = this.sprite.x + this.velocity.x;
         let y = this.sprite.y + this.velocity.y;
 
-        this.sprite.x = Math.min(Math.max(x, 32), gameWidth-32); // TODO hard coded size of sprite for now
-        this.sprite.y = Math.min(Math.max(y, 32), gameWidth-32);
+        this.sprite.x = Math.min(Math.max(x, 0), gameWidth-32); // TODO hard coded size of sprite for now
+        this.sprite.y = Math.min(Math.max(y, 0), gameHeight-32);
     }
 }
 
@@ -34,7 +34,7 @@ function setUpPlayerControls() {
 
 let pressed = {};
 let player;
-player = new Player(PIXI.Sprite.from('test-sprite.png'), 1);
+player = new Player(PIXI.Sprite.from('test-sprite.png'), 10);
 setUpPlayerControls();
 
 function onKeydown(event) {
