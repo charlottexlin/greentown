@@ -1,5 +1,5 @@
 // ----- Set up the pixi app and canvas -----
-const gameWidth = 2400, gameHeight = 1600;
+const gameWidth = 2432, gameHeight = 1600;
 let app = new PIXI.Application({width: gameWidth, height: gameHeight});
 document.querySelector("#canvas").appendChild(app.view);
 app.renderer.background.color = 0x123456;
@@ -143,8 +143,7 @@ function isColliding(a, b) {
 }
 
 // ----- Game loop to actually run the game -----
-setInterval(gameLoop, 1000/60);
-function gameLoop() {
+app.ticker.add(() => {
     player.update();
 
     if (isColliding(player.sprite, building.sprite) && pressed.e) {
@@ -177,4 +176,4 @@ function gameLoop() {
     if (pressed.up && player.sprite.y < window.innerHeight * 1.5) {
         window.scrollBy(0, -playerDefaultSpeed);
     }
-}
+});
