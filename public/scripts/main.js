@@ -2,29 +2,34 @@
 // import * as PIXI from 'pixi.js'
 
 // ----- Set up the pixi app and canvas -----
-let app = new PIXI.Application({width: 600, height: 500});
+const gameWidth = 700;
+let app = new PIXI.Application({width: gameWidth, height: 500});
 document.querySelector("#canvas").appendChild(app.view);
 app.renderer.background.color = 0x123456;
 
+// Citation: https://medium.com/swlh/a-game-any-web-dev-can-build-in-10-mins-using-pixijs-47f8bcd85700
 // Player class
 class Player {
     constructor(sprite, speed) {
         this.sprite = sprite;
         this.speed = speed;
-        //this.velocity = {x:0, y:0};
+        this.velocity = {x:0, y:0};
         app.stage.addChild(this.sprite);
     }
 
-    move(xMove, yMove) {
-        this.sprite.x = xMove;
-        this.sprite.y = yMove;
+    update() {
+        let x = this.sprite.x + this.velocity.x;
+        let y = this.sprite.y + this.velocity.y;
+
+        this.sprite.x = Math.min(Math.max(x, 32), gameWidth-32); // TODO hard coded size of sprite for now
+        this.sprite.y = Math.min(Math.max(y, 32), gameWidth-32);
     }
 }
 
 // ----- Set up the player -----
 function setUpPlayerControls() {
     window.addEventListener("keydown", onKeydown);
-    // window.addEventListener("keyup", onKeyup);
+    window.addEventListener("keyup", onKeyUp);
 }
 
 let pressed = {};
@@ -32,39 +37,64 @@ let player;
 player = new Player(PIXI.Sprite.from('test-sprite.png'), 1);
 setUpPlayerControls();
 
-// Citation: https://medium.com/swlh/a-game-any-web-dev-can-build-in-10-mins-using-pixijs-47f8bcd85700
 function onKeydown(event) {
     switch (event.key) {
         case "ArrowLeft":
         case "a":
-            player.move(-player.speed, 0);
+            player.velocity.x = -player.speed; 
             pressed['left'] = true;
             break;
 
         case "ArrowRight":
         case "d":
-            player.move(player.speed, 0);
+            player.velocity.x = player.speed; 
             pressed['right'] = true;
             break;
 
         case "ArrowUp":
         case "w":
-            player.move(0, player.speed);
+            player.velocity.y = -player.speed; 
             pressed['up'] = true;
             break;
 
         case "ArrowDown": 
         case "s":
-            player.move(0, -player.speed);
+            player.velocity.y = player.speed; 
             pressed['down'] = true;
             break;
     }
 }
 
-/*
-// ----- Run the game -----
-function gameLoop() {
+function onKeyUp(event) {
+    switch (event.key) {
+        case "ArrowLeft": 
+        case "a":
+            player.velocity.x = pressed['right'] ? player.speed:0; 
+            pressed['left'] = false;
+            break;
+
+        case "ArrowRight": 
+        case "d":
+            player.velocity.x = pressed['left'] ? -player.speed:0; 
+            pressed['right'] = false;
+            break;
+
+        case "ArrowUp": 
+        case "w":
+            player.velocity.y = pressed['down'] ? player.speed:0; 
+            pressed['up'] = false;
+            break;
+
+        case "ArrowDown": 
+        case "s":
+            player.velocity.y = pressed['up'] ? -player.speed:0; 
+            pressed['down'] = false;
+            break;
+    }
 }
 
+// ----- Game loop -----
 setInterval(gameLoop, 1000/60);
-*/
+function gameLoop() {
+    player.update();
+}
