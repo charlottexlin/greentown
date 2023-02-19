@@ -1,9 +1,13 @@
 // ----- Set up the pixi app and canvas -----
 const gameWidth = 1856, gameHeight = 1024;
-let app = new PIXI.Application({width: gameWidth, height: gameHeight, backgroundAlpha: 0 });
-document.querySelector("#canvas").appendChild(app.view);
+let app = new PIXI.Application({width: gameWidth, height: gameHeight});
+document.body.appendChild(app.view);
 
 // ----- Classes for game objects -----
+
+// Background
+let bg = PIXI.Sprite.from('bg.png');
+app.stage.addChild(bg);
 
 // Player object
 class Player {
@@ -38,13 +42,11 @@ class Interactable {
     }
 }
 
-// ----- Set up the player -----
-const playerDefaultSpeed = 8;
-let pressed = {};
-let player;
-player = new Player(PIXI.Sprite.from('test-sprite.png'), playerDefaultSpeed);
-app.stage.addChild(player.sprite);
-setUpPlayerControls();
+class NonInteractable {
+    constructor(sprite) {
+        this.sprite = sprite;
+    }
+}
 
 // Player control
 // Citation: https://medium.com/swlh/a-game-any-web-dev-can-build-in-10-mins-using-pixijs-47f8bcd85700
@@ -125,11 +127,51 @@ function onKeyup(event) {
     }
 }
 
-// Set up a building
-let building = new Interactable(PIXI.Sprite.from('blue_rectangle.jpg'), "this is a building");
-app.stage.addChild(building.sprite);
-building.sprite.x = 100;
-building.sprite.y = 200;
+// Set up solid structures
+let house1 = new Interactable(PIXI.Sprite.from('house.png'), "This is my house.");
+app.stage.addChild(house1.sprite);
+house1.sprite.x = 64;
+house1.sprite.y = 64;
+
+let house2 = new NonInteractable(PIXI.Sprite.from('house.png'));
+app.stage.addChild(house2.sprite);
+house2.sprite.x = 800;
+house2.sprite.y = 520;
+
+let house3 = new NonInteractable(PIXI.Sprite.from('house.png'));
+app.stage.addChild(house3.sprite);
+house3.sprite.x = 1620;
+house3.sprite.y = 40;
+
+let house4 = new NonInteractable(PIXI.Sprite.from('house.png'));
+app.stage.addChild(house4.sprite);
+house4.sprite.x = 1170;
+house4.sprite.y = 600;
+
+let dirtAccessories = new NonInteractable(PIXI.Sprite.from('dirtAccessories.png'));
+app.stage.addChild(dirtAccessories.sprite);
+dirtAccessories.sprite.x = 1300;
+dirtAccessories.sprite.y = 680;
+
+let forest = new NonInteractable(PIXI.Sprite.from('forest.png'));
+app.stage.addChild(forest.sprite);
+forest.sprite.x = 32;
+forest.sprite.y = 564;
+
+let stores = new NonInteractable(PIXI.Sprite.from('stores.png'));
+app.stage.addChild(stores.sprite);
+stores.sprite.x = 700;
+stores.sprite.y = 200;
+
+// ----- Set up the player -----
+const playerDefaultSpeed = 8;
+let pressed = {};
+let player;
+player = new Player(PIXI.Sprite.from('test-sprite.png'), playerDefaultSpeed);
+app.stage.addChild(player.sprite);
+player.sprite.x = 100;
+player.sprite.y = 280;
+setUpPlayerControls();
 
 // ----- Set up the dialogue box -----
 let dialogueBox = PIXI.Sprite.from('dialogueBox.png');
@@ -157,11 +199,11 @@ dialogueBox.y = window.innerHeight - 192 - 20;
 dialogueBox.visible = false;
 
 // ----- Collision detection -----
-function isColliding(other) {
+function checkCollision(other) {
     if (player.sprite.getBounds().intersects(other.sprite.getBounds())){
         if(pressed.left)
         {
-            if(player.sprite.x > other.sprite.x)
+            if(player.sprite.x > other.sprite.x + other.sprite.width - player.sprite.width/2)
             {
                 player.velocity.x = 0;
             }
@@ -182,17 +224,19 @@ function isColliding(other) {
         }
         else if(pressed.up)
         {
-            if(player.sprite.y > other.sprite.y)
+            if(player.sprite.y > other.sprite.y + other.sprite.height - player.sprite.height/2)
             {
                 player.velocity.y = 0;
             }
         }
+        return true;
     }
+    return false;
 }
 
 // ----- Setting dialogue ------
 function checkInteraction(interactable, text) {
-    if (isColliding(interactable) && pressed.e) {
+    if (checkCollision(interactable) && pressed.e) {
         dialogueBox.visible = true;
         dialogueText.text = text;
         player.freeze();
@@ -203,32 +247,42 @@ function checkInteraction(interactable, text) {
     }
 }
 
+let isColliding = false;
+
 // ----- Game loop to actually run the game -----
 app.ticker.add(() => {
+    isColliding = false;
     // Allow player to interact with environmental objects
-    checkInteraction(building, building.text);
+    isColliding = isColliding || checkInteraction(house1, house1.text);
+    isColliding = isColliding || checkCollision(house2);
+    isColliding = isColliding || checkCollision(house3);
+    isColliding = isColliding || checkCollision(house4);
+    isColliding = isColliding || checkCollision(forest);
+    isColliding = isColliding || checkCollision(stores);
 
     // Allow player to move
     player.update();
 
     // ----- Auto scroll window -----
     // player has exited window right
-    if (pressed.right && player.sprite.x > window.innerWidth/2) {
-        window.scrollBy(playerDefaultSpeed, 0);
-    }
-    
-    // player has exited window down
-    if (pressed.down && player.sprite.y > window.innerHeight/2) {
-        window.scrollBy(0, playerDefaultSpeed);
-    }
+    if (!isColliding) {
+        if (pressed.right && player.sprite.x > window.innerWidth/2) {
+            window.scrollBy(playerDefaultSpeed, 0);
+        }
+        
+        // player has exited window down
+        if (pressed.down && player.sprite.y > window.innerHeight/2) {
+            window.scrollBy(0, playerDefaultSpeed);
+        }
 
-    // player has exited window left
-    if (pressed.left && player.sprite.x < window.innerWidth) {
-        window.scrollBy(-playerDefaultSpeed, 0);
-    }
+        // player has exited window left
+        if (pressed.left && player.sprite.x < window.innerWidth) {
+            window.scrollBy(-playerDefaultSpeed, 0);
+        }
 
-    // player has exited window up
-    if (pressed.up && player.sprite.y < window.innerHeight * 1.5) {
-        window.scrollBy(0, -playerDefaultSpeed);
+        // player has exited window up
+        if (pressed.up && player.sprite.y < window.innerHeight * 1.5) {
+            window.scrollBy(0, -playerDefaultSpeed);
+        }
     }
 });
