@@ -1,10 +1,10 @@
 // ----- Set up the pixi app and canvas -----
-const gameWidth = 2432, gameHeight = 1600; // 38 tiles x 25 tiles
-let app = new PIXI.Application({width: gameWidth, height: gameHeight});
+const gameWidth = 1856, gameHeight = 1024;
+let app = new PIXI.Application({width: gameWidth, height: gameHeight, backgroundAlpha: 0 });
 document.querySelector("#canvas").appendChild(app.view);
-app.renderer.background.color = 0x123456;
 
 // ----- Classes for game objects -----
+
 // Player object
 class Player {
     constructor(sprite, speed) {
@@ -14,36 +14,6 @@ class Player {
     }
 
     update() {
-        if (isColliding(player.sprite, building.sprite)){
-            if(pressed['left'])
-            {
-                if(player.sprite.x > building.sprite.x)
-                {
-                    this.velocity.x = 0
-                }
-            }
-            else if(pressed['right'])
-            {
-                if(player.sprite.x < building.sprite.x)
-                {
-                    this.velocity.x = 0
-                }
-            }
-            if(pressed['down'])
-            {
-                if(player.sprite.y < building.sprite.y)
-                {
-                    this.velocity.y = 0
-                }
-            }
-            else if(pressed['up'])
-            {
-                if(player.sprite.y > building.sprite.y)
-                {
-                    this.velocity.y = 0
-                }
-            }
-        }
         let x = this.sprite.x + this.velocity.x;
         let y = this.sprite.y + this.velocity.y;
 
@@ -187,13 +157,42 @@ dialogueBox.y = window.innerHeight - 192 - 20;
 dialogueBox.visible = false;
 
 // ----- Collision detection -----
-function isColliding(a, b) {
-    return a.getBounds().intersects(b.getBounds());
+function isColliding(other) {
+    if (player.sprite.getBounds().intersects(other.sprite.getBounds())){
+        if(pressed.left)
+        {
+            if(player.sprite.x > other.sprite.x)
+            {
+                player.velocity.x = 0;
+            }
+        }
+        else if(pressed.right)
+        {
+            if(player.sprite.x < other.sprite.x)
+            {
+                player.velocity.x = 0;
+            }
+        }
+        if(pressed.down)
+        {
+            if(player.sprite.y < other.sprite.y)
+            {
+                player.velocity.y = 0;
+            }
+        }
+        else if(pressed.up)
+        {
+            if(player.sprite.y > other.sprite.y)
+            {
+                player.velocity.y = 0;
+            }
+        }
+    }
 }
 
 // ----- Setting dialogue ------
 function checkInteraction(interactable, text) {
-    if (isColliding(player.sprite, interactable) && pressed.e) {
+    if (isColliding(interactable) && pressed.e) {
         dialogueBox.visible = true;
         dialogueText.text = text;
         player.freeze();
@@ -202,15 +201,15 @@ function checkInteraction(interactable, text) {
         dialogueBox.visible = false;
         player.unfreeze();
     }
-} 
+}
 
 // ----- Game loop to actually run the game -----
 app.ticker.add(() => {
+    // Allow player to interact with environmental objects
+    checkInteraction(building, building.text);
+
     // Allow player to move
     player.update();
-
-    // Allow player to interact with environmental objects
-    checkInteraction(building.sprite, building.text);
 
     // ----- Auto scroll window -----
     // player has exited window right
