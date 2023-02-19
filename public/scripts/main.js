@@ -1,5 +1,5 @@
 // ----- Set up the pixi app and canvas -----
-const gameWidth = 2432, gameHeight = 1600;
+const gameWidth = 2432, gameHeight = 1600; // 38 tiles x 25 tiles
 let app = new PIXI.Application({width: gameWidth, height: gameHeight});
 document.querySelector("#canvas").appendChild(app.view);
 app.renderer.background.color = 0x123456;
