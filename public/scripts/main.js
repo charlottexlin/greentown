@@ -9,6 +9,12 @@ document.body.appendChild(app.view);
 let bg = PIXI.Sprite.from('bg.png');
 app.stage.addChild(bg);
 
+// Player sprites
+const playerDown = PIXI.Texture.from('playerDown.png');
+const playerUp = PIXI.Texture.from('playerUp.png');
+const playerLeft = PIXI.Texture.from('playerLeft.png');
+const playerRight = PIXI.Texture.from('playerRight.png');
+
 // Player object
 class Player {
     constructor(sprite, speed) {
@@ -18,6 +24,23 @@ class Player {
     }
 
     update() {
+        // going right
+        if (this.velocity.x > 0) {
+            this.sprite.texture = playerRight;
+        }
+        // going left
+        else if (this.velocity.x < 0) {
+            this.sprite.texture = playerLeft;
+        }
+        // going down
+        else if (this.velocity.y > 0) {
+            this.sprite.texture = playerDown;
+        }
+        // going up
+        else if (this.velocity.y < 0) {
+            this.sprite.texture = playerUp;
+        }
+
         let x = this.sprite.x + this.velocity.x;
         let y = this.sprite.y + this.velocity.y;
 
@@ -222,7 +245,7 @@ parkingLot.sprite.visible = false;
 const playerDefaultSpeed = 8;
 let pressed = {};
 let player;
-player = new Player(PIXI.Sprite.from('player.png'), playerDefaultSpeed);
+player = new Player(PIXI.Sprite.from('playerDown.png'), playerDefaultSpeed);
 app.stage.addChild(player.sprite);
 player.sprite.x = 100;
 player.sprite.y = 280;
@@ -250,12 +273,12 @@ app.stage.addChild(neighbor.sprite);
 neighbor.sprite.x = 400;
 neighbor.sprite.y = 250;
 
-let forestLady = new Interactable(PIXI.Sprite.from('forestLady.png'), "This forest has been here for a long, long time. Did you know that forests have mother trees?\nThey send carbon and nitrogen to other trees through underground fungal networks.\nNow people are considering cutting down the forest to make space for new developments.\nWhat choice will you make?\n[Press 1: Cut down the forest] [Press 2: Preserve the forest]", "npc");
+let forestLady = new Interactable(PIXI.Sprite.from('forestLady.png'), "This forest has been here for a long, long time. Did you know that forests have mother trees?\nThey send carbon and nitrogen to other trees through underground fungal networks.\nNow people are considering cutting down the forest to make space for new developments.\nWhat choice will you make?\n\n[Press 1: Cut down the forest] [Press 2: Preserve the forest]", "npc");
 app.stage.addChild(forestLady.sprite);
 forestLady.sprite.x = 550;
 forestLady.sprite.y = 500;
 
-let oldMan = new Interactable(PIXI.Sprite.from('oldMan.png'), "This dirt field has been empty for a long time now. Some people are saying we should make it a\ncommunity garden to grow fresh local food, but others say we should make it a parking lot to\naccommodate the increasing number of cars. Town planner, what do you think we should do?\n[Press 1: Community garden] [Press 2: Parking lot]", "npc");
+let oldMan = new Interactable(PIXI.Sprite.from('oldMan.png'), "This dirt field has been empty for a long time now. Some people are saying we should make it a\ncommunity garden to grow fresh local food, but others say we should make it a parking lot to\naccommodate the increasing number of cars. Town planner, what do you think we should do?\n\n[Press 1: Community garden] [Press 2: Parking lot]", "npc");
 app.stage.addChild(oldMan.sprite);
 oldMan.sprite.x = 1420;
 oldMan.sprite.y = 610;
@@ -311,6 +334,10 @@ function checkInteraction(interactable, text) {
     if (interactable.type === "npc") {
         isConversing = true;
     }
+
+    dialogueBox.x = window.scrollX + window.innerWidth/2 - 960/2;
+    dialogueBox.y = window.scrollY + window.innerHeight - 192 - 20;
+
     const collision = checkCollision(interactable);
     if (collision && pressed.e) {
         dialogueBox.visible = true;
@@ -392,7 +419,7 @@ app.ticker.add(() => {
                 checkInteraction(oldMan, "The whole community loves the garden! Now that we grow our own fruits and vegetables,\nwe don’t have to spend as much money on importing produce. Plus, those big produce trucks won’t\npollute the environment driving here. We try to garden as sustainably as possible,\nby always taking care of the soil and never using pesticides.\n\n[Press X to close dialogue]");
             }
             else if (interacted.oldMan === "parkingLot") {
-                checkInteraction(oldMan, "The air in this area isn’t as clean anymore because of all the cars now. We also have to import\nour produce, which isn’t just more expensive, but also increases carbon emissions because of the transportation.\n\n[Press X to close dialogue]");
+                checkInteraction(oldMan, "The air in this area isn’t as clean anymore because of all the cars now. We also have to import\nour produce, which isn’t just more expensive, but also increases carbon emissions because of\nthe transportation.\n\n[Press X to close dialogue]");
             }
         }
         player.choice = "";
@@ -488,10 +515,12 @@ function businessmanInteract(choice) {
         interacted.businessman = "factory";
         factory.sprite.visible = true;
         stores.sprite.visible = false;
+        pollution.sprite.visible = true;
     }
     else if (choice == "2") {
         interacted.businessman = "stores";
         factory.sprite.visible = false;
         stores.sprite.visible = true;
+        pollution.sprite.visible = false;
     }
 }
