@@ -36,9 +36,10 @@ class Player {
 
 // Interactable environmental object
 class Interactable {
-    constructor(sprite, text) {
+    constructor(sprite, text, type) {
         this.sprite = sprite;
         this.text = text;
+        this.type = type;
     }
 }
 
@@ -88,6 +89,20 @@ function onKeydown(event) {
         case "x":
             pressed.x = true;
             break;
+
+        case "1":
+            pressed['1'] = true;
+            if (isConversing) {
+                player.choice = "1";
+            }
+            break;
+        
+        case "2":
+            pressed['2'] = true;
+            if (isConversing) {
+                player.choice = "2";
+            }
+            break;
     }
 }
 
@@ -124,11 +139,19 @@ function onKeyup(event) {
         case "x":
             pressed.x = false;
             break;
+
+        case "1":
+            pressed['1'] = false;
+            break;
+
+        case "2":
+            pressed['2'] = false;
+            break;
     }
 }
 
 // Set up solid structures
-let house1 = new Interactable(PIXI.Sprite.from('house.png'), "This is my house.");
+let house1 = new Interactable(PIXI.Sprite.from('house.png'), "This is my house.\n\n\n\n\n[Press X to close dialogue]", "structure");
 app.stage.addChild(house1.sprite);
 house1.sprite.x = 64;
 house1.sprite.y = 64;
@@ -152,6 +175,7 @@ let dirtAccessories = new NonInteractable(PIXI.Sprite.from('dirtAccessories.png'
 app.stage.addChild(dirtAccessories.sprite);
 dirtAccessories.sprite.x = 1300;
 dirtAccessories.sprite.y = 680;
+dirtAccessories.sprite.visible = true;
 
 let forest = new NonInteractable(PIXI.Sprite.from('forest.png'));
 app.stage.addChild(forest.sprite);
@@ -162,6 +186,37 @@ let stores = new NonInteractable(PIXI.Sprite.from('stores.png'));
 app.stage.addChild(stores.sprite);
 stores.sprite.x = 700;
 stores.sprite.y = 200;
+stores.sprite.visible = false;
+
+let factory = new NonInteractable(PIXI.Sprite.from('factory.png'));
+app.stage.addChild(factory.sprite);
+factory.sprite.x = 700;
+factory.sprite.y = 200;
+factory.sprite.visible = false;
+
+let deforestation = new NonInteractable(PIXI.Sprite.from('deforestation.png'));
+app.stage.addChild(deforestation.sprite);
+deforestation.sprite.x = 80;
+deforestation.sprite.y = 564;
+deforestation.sprite.visible = false;
+
+let pollution = new NonInteractable(PIXI.Sprite.from('pollution.png'));
+app.stage.addChild(pollution.sprite);
+pollution.sprite.x = 1050;
+pollution.sprite.y = 430;
+pollution.sprite.visible = false;
+
+let garden = new NonInteractable(PIXI.Sprite.from('garden.png'));
+app.stage.addChild(garden.sprite);
+garden.sprite.x = 1345;
+garden.sprite.y = 710;
+garden.sprite.visible = true;
+
+let parkingLot = new NonInteractable(PIXI.Sprite.from('parkingLot.png'));
+app.stage.addChild(parkingLot.sprite);
+parkingLot.sprite.x = 1315;
+parkingLot.sprite.y = 675;
+parkingLot.sprite.visible = true;
 
 // ----- Set up the player -----
 const playerDefaultSpeed = 8;
@@ -177,26 +232,27 @@ setUpPlayerControls();
 let dialogueBox = PIXI.Sprite.from('dialogueBox.png');
 const dialogueText = new PIXI.Text("Dialogue box text", { // set dialogueText.text to change
     fontFamily: 'Arial',
-    fontSize: 24,
-    fill: 0x000000,
-    align: 'center',
+    fontSize: 20,
+    fill: 0x000000
 });
-const closeText = new PIXI.Text("[Press X to close dialogue]", {
-    fontFamily: 'Arial',
-    fontSize: 24,
-    fill: 0x000000,
-    align: 'center',
-});
-closeText.x = 32;
-closeText.y = 136;
 dialogueText.x = 32;
 dialogueText.y = 32;
 dialogueBox.addChild(dialogueText);
-dialogueBox.addChild(closeText);
 app.stage.addChild(dialogueBox);
 dialogueBox.x = window.innerWidth/2 - 960/2;
-dialogueBox.y = window.innerHeight - 192 - 20;
+dialogueBox.y = window.scrollY + window.innerHeight - 192 - 20;
 dialogueBox.visible = false;
+
+// ----- Set up NPCs -----
+let neighbor = new Interactable(PIXI.Sprite.from('neighbor.png'), "Oh, you’re the new town planner aren’t you? I’m so excited to see what you do with our community!\nGreen Town is beautiful because it’s right in the middle of the forest. Don’t you agree?\n\n[Press X to close dialogue]", "npc");
+app.stage.addChild(neighbor.sprite);
+neighbor.sprite.x = 400;
+neighbor.sprite.y = 250;
+
+let forestLady = new Interactable(PIXI.Sprite.from('forestLady.png'), "This forest has been here for a long, long time. Did you know that forests have mother trees?\nThey send carbon and nitrogen to other trees through underground fungal networks.\nNow people are considering cutting down the forest to make space for new developments.\nWhat choice will you make?\n[Press 1: Cut down the forest] [Press 2: Preserve the forest]", "npc");
+app.stage.addChild(forestLady.sprite);
+forestLady.sprite.x = 550;
+forestLady.sprite.y = 500;
 
 // ----- Collision detection -----
 function checkCollision(other) {
@@ -236,29 +292,74 @@ function checkCollision(other) {
 
 // ----- Setting dialogue ------
 function checkInteraction(interactable, text) {
-    if (checkCollision(interactable) && pressed.e) {
+    if (interactable.type === "npc") {
+        isConversing = true;
+    }
+    const collision = checkCollision(interactable);
+    if (collision && pressed.e) {
         dialogueBox.visible = true;
         dialogueText.text = text;
         player.freeze();
     }
-    if (dialogueBox.visible && pressed.x) {
+    if (dialogueBox.visible && (pressed.x || (isConversing && (pressed["1"] || pressed["2"])))) {
         dialogueBox.visible = false;
         player.unfreeze();
     }
+    return collision;
 }
 
 let isColliding = false;
+const interacted = {};
+let isConversing = false;
 
 // ----- Game loop to actually run the game -----
 app.ticker.add(() => {
     isColliding = false;
+    isConversing = false;
+
+    // Allow player to interact with NPCs
+    const forestLadyCollide = checkInteraction(forestLady, forestLady.text);
+    const neighborCollide = checkInteraction(neighbor, neighbor.text);
+
     // Allow player to interact with environmental objects
     isColliding = isColliding || checkInteraction(house1, house1.text);
     isColliding = isColliding || checkCollision(house2);
     isColliding = isColliding || checkCollision(house3);
     isColliding = isColliding || checkCollision(house4);
     isColliding = isColliding || checkCollision(forest);
-    isColliding = isColliding || checkCollision(stores);
+    isColliding = isColliding || checkCollision(deforestation);
+    isColliding = isColliding || forestLadyCollide;
+    isColliding = isColliding || neighborCollide;
+    
+    if (stores.sprite.visible) {
+        isColliding = isColliding || checkCollision(stores);
+    }
+    if (factory.sprite.visible) {
+        isColliding = isColliding || checkCollision(factory);
+    }
+
+    // NPC interaction markers
+    if (forestLadyCollide) {
+        if (!interacted.forestLady) {
+            forestLadyInteract(player.choice);
+        } else {
+            if (interacted.forestLady === "deforestation") {
+                checkInteraction(forestLady, "I’m sad to see all the trees gone. Trees are important for the environment because they store carbon,\nwhich contributes to climate change. Every year, forests absorb 2.4 billion metric tons of carbon.\nI wonder how the mother tree and all the little creatures that lived in that forest feel now.\n\n[Press X to close dialogue]");
+            }
+            else if (interacted.forestLady === "forest") {
+                checkInteraction(forestLady, "I’m glad you chose to save the forest. Trees are important for the environment because they store carbon,\nwhich contributes to climate change. Every year, forests absorb 2.4 billion metric tons of carbon.\nI am sure the mother tree and all the little creatures that live in the forest are happy, too.\n\n[Press X to close dialogue]");
+            }
+        }
+    }
+
+    if (neighborCollide) {
+        if (!interacted.neighborCollide) {
+            if (interacted.forestLady === "deforestation") {
+                interacted.neighbor = "deforestation";
+                checkInteraction(neighbor, "It's too bad the forest was cut down. It was such a nice place to talk walks.\n\n[Press X to close dialogue]");
+            }
+        }
+    }
 
     // Allow player to move
     player.update();
@@ -286,3 +387,15 @@ app.ticker.add(() => {
         }
     }
 });
+
+// NPC interactions
+function forestLadyInteract(choice) {
+    if (choice == "1") {
+        interacted.forestLady = "deforestation";
+        forest.sprite.visible = false;
+        deforestation.sprite.visible = true;
+    }
+    else if (choice == "2") {
+        interacted.forestLady = "forest";
+    }
+}
