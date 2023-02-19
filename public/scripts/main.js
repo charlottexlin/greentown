@@ -30,10 +30,11 @@ class Player {
     }
 }
 
-// Structure
-class Structure {
-    constructor(sprite) {
+// Interactable environmental object
+class Interactable {
+    constructor(sprite, text) {
         this.sprite = sprite;
+        this.text = text;
     }
 }
 
@@ -125,16 +126,34 @@ function onKeyup(event) {
 }
 
 // Set up a building
-let building = new Structure(PIXI.Sprite.from('blue_rectangle.jpg'));
+let building = new Interactable(PIXI.Sprite.from('blue_rectangle.jpg'), "this is a building");
 app.stage.addChild(building.sprite);
 building.sprite.x = 100;
 building.sprite.y = 200;
 
-// Set up the dialogue box
-let dialogueBox = PIXI.Sprite.from('tan-rectangle.png');
+// ----- Set up the dialogue box -----
+let dialogueBox = PIXI.Sprite.from('dialogueBox.png');
+const dialogueText = new PIXI.Text("Dialogue box text", { // set dialogueText.text to change
+    fontFamily: 'Arial',
+    fontSize: 24,
+    fill: 0x000000,
+    align: 'center',
+});
+const closeText = new PIXI.Text("[Press X to close dialogue]", {
+    fontFamily: 'Arial',
+    fontSize: 24,
+    fill: 0x000000,
+    align: 'center',
+});
+closeText.x = 32;
+closeText.y = 136;
+dialogueText.x = 32;
+dialogueText.y = 32;
+dialogueBox.addChild(dialogueText);
+dialogueBox.addChild(closeText);
 app.stage.addChild(dialogueBox);
-dialogueBox.x = window.innerWidth/2 - 1000/2; // TODO length of dialogue box
-dialogueBox.y = window.innerHeight - 171 - 20; // TODO height of the dialogue box
+dialogueBox.x = window.innerWidth/2 - 960/2;
+dialogueBox.y = window.innerHeight - 192 - 20;
 dialogueBox.visible = false;
 
 // ----- Collision detection -----
@@ -142,19 +161,26 @@ function isColliding(a, b) {
     return a.getBounds().intersects(b.getBounds());
 }
 
-// ----- Game loop to actually run the game -----
-app.ticker.add(() => {
-    player.update();
-
-    if (isColliding(player.sprite, building.sprite) && pressed.e) {
+// ----- Setting dialogue ------
+function checkInteraction(interactable, text) {
+    if (isColliding(player.sprite, interactable) && pressed.e) {
         dialogueBox.visible = true;
+        dialogueText.text = text;
         player.freeze();
     }
-
     if (dialogueBox.visible && pressed.x) {
         dialogueBox.visible = false;
         player.unfreeze();
     }
+} 
+
+// ----- Game loop to actually run the game -----
+app.ticker.add(() => {
+    // Allow player to move
+    player.update();
+
+    // Allow player to interact with environmental objects
+    checkInteraction(building.sprite, building.text);
 
     // ----- Auto scroll window -----
     // player has exited window right
