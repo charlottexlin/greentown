@@ -14,6 +14,36 @@ class Player {
     }
 
     update() {
+        if (isColliding(player.sprite, building.sprite)){
+            if(pressed['left'])
+            {
+                if(player.sprite.x > building.sprite.x)
+                {
+                    this.velocity.x = 0
+                }
+            }
+            else if(pressed['right'])
+            {
+                if(player.sprite.x < building.sprite.x)
+                {
+                    this.velocity.x = 0
+                }
+            }
+            if(pressed['down'])
+            {
+                if(player.sprite.y < building.sprite.y)
+                {
+                    this.velocity.y = 0
+                }
+            }
+            else if(pressed['up'])
+            {
+                if(player.sprite.y > building.sprite.y)
+                {
+                    this.velocity.y = 0
+                }
+            }
+        }
         let x = this.sprite.x + this.velocity.x;
         let y = this.sprite.y + this.velocity.y;
 
